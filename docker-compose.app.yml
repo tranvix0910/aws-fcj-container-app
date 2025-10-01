@@ -1,0 +1,25 @@
+version: "3"
+services:
+  backend:
+    env_file:
+      - path: "./docker-compose-env/backend.app.env"
+    build:
+      dockerfile: Dockerfile
+      context: backend
+    volumes:
+      - /app/node_modules
+      - ./backend:/app
+    ports:
+      - "5000:5000"
+  frontend:
+    stdin_open: true
+    depends_on:
+      - backend
+    build:
+      dockerfile: Dockerfile
+      context: ./frontend
+    volumes:
+      - /app/node_modules
+      - ./frontend:/app
+    ports:
+      - "3000:80"

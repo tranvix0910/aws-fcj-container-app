@@ -1,0 +1,72 @@
+name: Frontend CI/CD
+
+on:
+  workflow_call:
+
+env:
+  IMAGE_NAME_FE: ${{ secrets.AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.CI_PROJECT_FE_NAME }}:${{ github.ref_name }}
+
+jobs:
+  # this comment need when you implement in prod env (1)
+  # check_changes_frontend:
+  #   runs-on: ubuntu-latest
+  #   outputs:
+  #     frontend: ${{ steps.filter.outputs.frontend }}
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: dorny/paths-filter@v2
+  #       id: filter
+  #       with:
+  #         filters: |
+  #           frontend:
+  #             - 'frontend/**'
+
+  build-and-push:
+    # this comment need when you implement in prod env (1)
+    # needs: check_changes_frontend
+    # if: ${{ needs.check_changes_frontend.outputs.frontend == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push image to Amazon ECR
+        working-directory: ./frontend
+        run: |
+          docker build -f Dockerfile.prod -t ${{ env.IMAGE_NAME_FE }} .
+          docker push ${{ env.IMAGE_NAME_FE }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy Frontend
+        env:
+          TASK_NAME_FE: ${{ secrets.TASK_NAME_FE }}
+          CLUSTER_NAME: ${{ secrets.CLUSTER_NAME }}
+          SERVICE_NAME_FE: ${{ secrets.SERVICE_NAME_FE }}
+          IMAGE_NAME_FE: ${{ env.IMAGE_NAME_FE }}
+          REGION: ${{ secrets.AWS_REGION }}
+        run: bash frontend/deploy-frontend.sh
+ 

@@ -64,8 +64,8 @@ jobs:
       - name: Deploy Backend
         env:
           TASK_NAME_BE: ${{ secrets.TASK_NAME_BE }}
+          CLUSTER_NAME: ${{ secrets.CLUSTER_NAME }}
+          SERVICE_NAME_BE: ${{ secrets.SERVICE_NAME_BE }}
           IMAGE_NAME_BE: ${{ env.IMAGE_NAME_BE }}
-          AWS_APPLICATION_NAME: ${{ secrets.AWS_APPLICATION_NAME }}
-          AWS_DEPLOYMENT_GROUP_NAME: ${{ secrets.AWS_DEPLOYMENT_GROUP_NAME }}
           REGION: ${{ secrets.AWS_REGION }}
         run: bash backend/deploy-backend.sh
